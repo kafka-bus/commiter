@@ -2,18 +2,18 @@
 
 namespace KafkaBus\Commiter\Middleware;
 
-use KafkaBus\Core\Interfaces\Pipelines\PipelineInterface;
-use KafkaBus\Core\Producers\Messages\ProducerMessage;
-use KafkaBus\Core\Producers\Pipelines\ProducerPipelineHandler;
-use KafkaBus\Core\Producers\Pipelines\ProducerPipelineMiddleware;
 use KafkaBus\Commiter\Interfaces\HasIdempotency;
 use KafkaBus\Commiter\Repositories\IdempotencyMessageRepository;
+use KafkaBus\Core\Pipelines\PipelineInterface;
+use KafkaBus\Core\Producers\Messages\ProducerMessage;
+use KafkaBus\Core\Publishers\Pipelines\PublisherPipelineHandler;
+use KafkaBus\Core\Publishers\Pipelines\PublisherPipelineMiddleware;
 
-final readonly class ProducerIdempotencyMiddleware implements ProducerPipelineMiddleware
+final readonly class PublisherIdempotencyMiddleware implements PublisherPipelineMiddleware
 {
     /**
-     * @param PipelineInterface<ProducerMessage, ProducerPipelineHandler> $pipeline
-     * @return PipelineInterface<ProducerMessage, ProducerPipelineHandler>
+     * @param PipelineInterface<ProducerMessage, PublisherPipelineHandler> $pipeline
+     * @return PipelineInterface<ProducerMessage, PublisherPipelineHandler>
      */
     public function handle(PipelineInterface $pipeline): PipelineInterface
     {
