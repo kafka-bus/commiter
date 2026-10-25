@@ -1,11 +1,11 @@
 <?php
 
-namespace KafkaBus\Commiter\Tests\Repositories;
+namespace KafkaBus\Commiter\Tests;
 
-use KafkaBus\Commiter\Repositories\ArrayRepositorySource;
-use KafkaBus\Commiter\Repositories\NativeMessageRepository;
 use KafkaBus\Core\Consumers\Messages\ConsumerMessage;
 use KafkaBus\Core\Testing\Consumers\MessageFactory;
+use KafkaBus\Commiter\Repositories\ArrayRepositorySource;
+use KafkaBus\Commiter\Repositories\NativeMessageRepository;
 use Testo\Assert;
 use Testo\Test;
 

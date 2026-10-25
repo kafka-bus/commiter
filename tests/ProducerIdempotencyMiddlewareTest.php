@@ -2,19 +2,13 @@
 
 namespace KafkaBus\Commiter\Tests;
 
+use KafkaBus\Core\Interfaces\Producers\Messages\ProducerMessageInterface;
 use KafkaBus\Commiter\Interfaces\HasIdempotency;
-use KafkaBus\Commiter\Middleware\PublisherIdempotencyMiddleware;
+use KafkaBus\Commiter\Middleware\ProducerIdempotencyMiddleware;
 use KafkaBus\Commiter\Repositories\IdempotencyMessageRepository;
-use KafkaBus\Core\Producers\Messages\ProducerMessage;
-use KafkaBus\Core\Producers\Messages\ProducerMessageInterface;
-use KafkaBus\Core\Publishers\PublisherFactory;
-use KafkaBus\Core\Publishers\PublisherStreamFactory;
-use KafkaBus\Core\Publishers\Routing\Options;
-use KafkaBus\Core\Publishers\Routing\PublisherRoutesBuilder;
-use KafkaBus\Core\Testing\Assertions\TestoAssertionDriver;
-use KafkaBus\Core\Testing\BusFaker;
-use KafkaBus\Core\Topics\Topic;
-use KafkaBus\Core\Topics\TopicRegistry;
+use KafkaBus\Commiter\Tests\Fakes\FakePipeline;
+use KafkaBus\Commiter\Tests\Fakes\FakeProducerPipelineHandler;
+use Testo\Assert;
 use Testo\Test;
 
 #[Test]
@@ -34,15 +28,13 @@ final class ProducerIdempotencyMiddlewareTest
             }
         };
 
-        $busFaker = $this->buildBusFaker($message::class);
+        $handler = new FakeProducerPipelineHandler($message);
+        $pipeline = new FakePipeline($handler);
 
-        $busFaker->publish($message);
+        (new ProducerIdempotencyMiddleware())->handle($pipeline);
 
-        $busFaker->assertPublished(
-            $message::class,
-            static fn (ProducerMessage $producerMessage): bool =>
-                ($producerMessage->headers[IdempotencyMessageRepository::HEADER_NAME] ?? null) === 'idem-1',
-        );
+        Assert::same($handler->headers[IdempotencyMessageRepository::HEADER_NAME] ?? null, 'idem-1');
+        Assert::true($pipeline->continued);
     }
 
     public function doesNotSetHeaderForRegularMessage(): void
@@ -54,34 +46,12 @@ final class ProducerIdempotencyMiddlewareTest
             }
         };
 
-        $busFaker = $this->buildBusFaker($message::class);
+        $handler = new FakeProducerPipelineHandler($message);
+        $pipeline = new FakePipeline($handler);
 
-        $busFaker->publish($message);
+        (new ProducerIdempotencyMiddleware())->handle($pipeline);
 
-        $busFaker->assertPublished(
-            $message::class,
-            static fn (ProducerMessage $producerMessage): bool =>
-                ! \array_key_exists(IdempotencyMessageRepository::HEADER_NAME, $producerMessage->headers),
-        );
-    }
-
-    /**
-     * @param class-string<ProducerMessageInterface> $messageClass
-     * @return BusFaker
-     */
-    private function buildBusFaker(string $messageClass): BusFaker
-    {
-        $topicRegistry = (new TopicRegistry())
-            ->add(new Topic('production.fact.products.1', 'products'));
-
-        $routes = PublisherRoutesBuilder::make($topicRegistry)
-            ->add($messageClass, 'products', new Options(middleware: [new PublisherIdempotencyMiddleware()]))
-            ->build();
-
-        return BusFaker::make(
-            $topicRegistry,
-            new TestoAssertionDriver(),
-            new PublisherFactory(new PublisherStreamFactory(), $routes),
-        );
+        Assert::false(\array_key_exists(IdempotencyMessageRepository::HEADER_NAME, $handler->headers));
+        Assert::true($pipeline->continued);
     }
 }
