@@ -1,6 +1,6 @@
 <?php
 
-namespace KafkaBus\Commiter\Tests;
+namespace KafkaBus\Commiter\Tests\Repositories;
 
 use KafkaBus\Commiter\Repositories\ArrayRepositorySource;
 use Testo\Assert;
